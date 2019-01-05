@@ -1,0 +1,148 @@
+
+//  ViewController.swift
+//  Quizz App
+//
+
+//
+
+import UIKit
+
+class ViewController: UIViewController {
+    
+    //Place your instance variables here
+    let allQuestions = QuestionBank()
+    var pickedAnswer : Bool = false
+    var questionNumber : Int = 0
+    var score : Int = 0
+    
+    
+    @IBOutlet weak var questionLabel: UILabel!
+    @IBOutlet weak var scoreLabel: UILabel!
+    @IBOutlet var progressBar: UIView!
+    @IBOutlet weak var progressLabel: UILabel!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        let firstQuestion = allQuestions.list[0]
+        questionLabel.text = firstQuestion.questionText
+    }
+
+
+    @IBAction func answerPressed(_ sender: AnyObject) {
+        if sender.tag == 1 {
+            pickedAnswer = true
+            
+        }
+        else if sender.tag == 2 {
+            pickedAnswer = false
+        }
+        checkAnswer ()
+        questionNumber = questionNumber + 1
+        nextQuestion()
+        
+  
+    
+    }
+    
+    func updateUI() {
+        scoreLabel.text = "Score: \(score)"
+        progressLabel.text = "\(questionNumber + 1) / 13"
+        
+        progressBar.frame.size.width = (view.frame.size.width / 13) * CGFloat(questionNumber)
+        
+      }
+    
+
+    func nextQuestion() {
+        if questionNumber <= 12 {
+            questionLabel.text = allQuestions.list[questionNumber].questionText
+            
+            updateUI()
+        }
+            // UI Alert code from Apple.Developer page
+        else {
+            let alert = UIAlertController(title: "Awesome", message: "You've finished! Do you want to start over?", preferredStyle: .alert)
+            let restartAction = UIAlertAction(title: "Restart", style: .default, handler: {(UIAlertAction) in
+                self.startOver()
+            })
+            alert.addAction(restartAction)
+            present(alert, animated: true, completion: nil)
+        }
+    }
+    
+    
+    func checkAnswer() {
+        
+        let correctAnswer = allQuestions.list[questionNumber].answer
+        if correctAnswer == pickedAnswer {
+            ProgressHUD.showSuccess("Correct!")
+            score = score + 1
+        }
+        else {
+            ProgressHUD.showError("Wrong!")
+        }
+    }
+    
+    
+    func startOver() {
+       score = 0
+        questionNumber = 0
+        nextQuestion()
+
+    }
+    
+
+    
+}
+////////////Above is View Controller.... Below is Model file for Question Bank in Swift
+QuestionBank.swift
+//  Quizz
+//
+//  Created by joel chenoweth on 1/4/19.
+//  Copyright © 2019
+//
+
+import Foundation
+
+class QuestionBank {
+    // a 'property'
+    var list = [Question]()
+    
+    // initialization 'method'
+    init() {
+        
+        // Creating a quiz item and appending it to the list
+        let item = Question(text: "Valentine\'s day is banned in Saudi Arabia.", correctAnswer: true)
+        
+        // Add the Question to the list of questions
+        list.append(item)
+        
+        // skipping one step and just creating the quiz item inside the append function
+        list.append(Question(text: "A slug\'s blood is green.", correctAnswer: true))
+        
+        list.append(Question(text: "Approximately one quarter of human bones are in the feet.", correctAnswer: true))
+        
+        list.append(Question(text: "The total surface area of two human lungs is approximately 70 square metres.", correctAnswer: true))
+        
+        list.append(Question(text: "In West Virginia, USA, if you accidentally hit an animal with your car, you are free to take it home to eat.", correctAnswer: true))
+        
+        list.append(Question(text: "In London, UK, if you happen to die in the House of Parliament, you are technically entitled to a state funeral, because the building is considered too sacred a place.", correctAnswer: false))
+        
+        list.append(Question(text: "It is illegal to pee in the Ocean in Portugal.", correctAnswer: true))
+        
+        list.append(Question(text: "You can lead a cow down stairs but not up stairs.", correctAnswer: false))
+        
+        list.append(Question(text: "Google was originally called \"Backrub\".", correctAnswer: true))
+        
+        list.append(Question(text: "Buzz Aldrin\'s mother\'s maiden name was \"Moon\".", correctAnswer: true))
+        
+        list.append(Question(text: "The loudest sound produced by any animal is 188 decibels. That animal is the African Elephant.", correctAnswer: false))
+        
+        list.append(Question(text: "No piece of square dry paper can be folded in half more than 7 times.", correctAnswer: false))
+        
+        list.append(Question(text: "Chocolate affects a dog\'s heart and nervous system; a few ounces are enough to kill a small dog.", correctAnswer: true))
+    }
+    
+    
+}
