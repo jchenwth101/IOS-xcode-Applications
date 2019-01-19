@@ -1,0 +1,218 @@
+// Joel Chenoweth
+//  ViewController.swift
+//  WeatherApp
+//
+//
+//
+
+import UIKit
+import CoreLocation
+import Alamofire
+import SwiftyJSON
+
+class WeatherViewController: UIViewController, CLLocationManagerDelegate,ChangeCityDelegate {
+    
+    //This is where I set up Constants
+    let WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather"
+    let APP_ID = "e72ca729af228beabd5d20e3b7749713"
+    
+
+    //TODO: Declare instance variables here
+    let locationManager = CLLocationManager()
+    let weatherDataModel = WeatherDataModel()
+    
+
+    
+    //This is where I set up Pre-linked IBOutlets
+    @IBOutlet weak var weatherIcon: UIImageView!
+    @IBOutlet weak var cityLabel: UILabel!
+    @IBOutlet weak var temperatureLabel: UILabel!
+    
+    
+
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        
+        //TODO:This is where I'll Set up the location manager.
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.startUpdatingLocation()
+        
+        
+        
+    }
+    
+    
+    
+    //MARK: - Networking
+    /***************************************************************/
+    
+    //I'll Write the getWeatherData method here:
+   func getWeatherData(url: String, parameters: [String: String]) {
+    Alamofire.request(url, method: .get, parameters: parameters).responseJSON {
+        response in
+        if response.result.isSuccess {
+        print("Success! Got the weather data")
+            let weatherJSON : JSON = JSON(response.result.value!)
+           self.updateWeatherData(json: weatherJSON)
+        }
+        else {
+            print("Error \(response.result.error)")
+            self.cityLabel.text = "Connection Issues"
+            
+    }
+    
+    }
+    
+    
+
+    
+    
+    
+    
+    
+    //MARK: - JSON Parsing
+    /***************************************************************/
+   
+    
+    //I'll Write the updateWeatherData method here:
+  
+    }
+    func updateWeatherData(json : JSON) {
+        if let tempResult = json["main"]["temp"].double {
+        weatherDataModel.temperature = Int (tempResult - 273.15 + 32)
+        weatherDataModel.city = json ["name"].stringValue
+        weatherDataModel.condition = json["weather"]["id"].intValue
+        weatherDataModel.weatherIconName = weatherDataModel.updateWeatherIcon(condition: weatherDataModel.condition)
+            
+            updateUIWithWeatherData()
+        }
+        else {
+            cityLabel.text = "Weather Unavailable"
+        }
+    }
+    
+    
+    //MARK: - UI Updates
+    /***************************************************************/
+    
+    
+    //I'll Write the updateUIWithWeatherData method here:
+    func updateUIWithWeatherData() {
+        cityLabel.text = weatherDataModel.city
+        temperatureLabel.text = "\(weatherDataModel.temperature)°"
+        weatherIcon.image = UIImage(named: weatherDataModel.weatherIconName)
+        
+    }
+ 
+    
+    
+    
+    
+    
+    
+    //MARK: - Location Manager Delegate Methods
+    /***************************************************************/
+    
+    
+    //I'll Write the didUpdateLocations method here:
+     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        
+        let location = locations[locations.count - 1]
+        if location.horizontalAccuracy > 0 {
+        
+            locationManager.stopUpdatingLocation()
+            
+            
+            print ("longitude = \(location.coordinate.longitude), latitude = \(location.coordinate.latitude)")
+        let latitude = String(location.coordinate.latitude)
+            let longitude = String(location.coordinate.longitude)
+            let params : [String : String] = ["lat" : latitude, "lon" : longitude, "appid" : APP_ID]
+            getWeatherData(url:WEATHER_URL, parameters: params)
+        }
+    }
+    
+    
+    
+    //I'll Write the didFailWithError method here:
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print (error)
+        cityLabel.text = "Location Unavailable"
+    }
+    
+    
+    
+
+    
+    //MARK: - Change City Delegate methods
+    /***************************************************************/
+    
+    
+    //I'll Write the userEnteredANewCityName Delegate method here:
+    func userEnteredANewCityName(city: String) {
+        let params : [String : String] = ["q" : city, "appid" : APP_ID]
+        
+    }
+
+    
+    //I'll Write the PrepareForSegue Method here
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "changeCityName" {
+            let destinationVC = segue.destination as! ChangeCityViewController
+            destinationVC.delegate = self
+        }
+    }
+    
+    
+    
+    
+}
+
+import UIKit
+
+
+//Write the protocol declaration here:
+protocol ChangeCityDelegate {
+    func userEnteredANewCityName (city: String)
+}
+
+
+class ChangeCityViewController: UIViewController {
+    
+    //Declare the delegate variable here:
+    var delegate  : ChangeCityDelegate?
+    
+    //This is the pre-linked IBOutlets to the text field:
+    @IBOutlet weak var changeCityTextField: UITextField!
+
+    
+    //This is the IBAction that gets called when the user taps on the "Get Weather" button:
+    @IBAction func getWeatherPressed(_ sender: AnyObject) {
+        
+        
+        
+        //1 Get the city name the user entered in the text field
+        let cityName = changeCityTextField.text!
+        
+        //2 If we have a delegate set, call the method userEnteredANewCityName
+        delegate?.userEnteredANewCityName(city: cityName)
+        
+        
+        //3 dismiss the Change City View Controller to go back to the WeatherViewController
+        self.dismiss(animated: true, completion: nil)
+        
+    }
+    
+    
+
+    //This is the IBAction that gets called when the user taps the back button. It dismisses the ChangeCityViewController.
+    @IBAction func backButtonPressed(_ sender: AnyObject) {
+        self.dismiss(animated: true, completion: nil)
+    }
+    
+}
+
+
